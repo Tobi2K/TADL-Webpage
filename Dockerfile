@@ -1,10 +1,10 @@
-FROM node:latest as build-stage
-ENV APP_PORT 8888
-EXPOSE 8888
+FROM node:lts-alpine
+RUN npm install -g http-server
 WORKDIR /TADL
 COPY package*.json ./
 RUN npm install
-COPY ./ .
+COPY . .
 RUN npm run build
 
-CMD [ "npm", "run", "serve" ]
+EXPOSE 8080
+CMD [ "http-server", "dist" ]
