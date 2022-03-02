@@ -8,7 +8,12 @@
         :value="party.value"
       >
         <n-card :title="'Party #' + (index + 1)" style="height: 100%">
-          <p>{{ party.text }}</p>
+          <div @click="openModal(index + 1, party.text)">
+            <n-ellipsis :line-clamp="15" :tooltip="false">
+              {{ party.text }}
+            </n-ellipsis>
+          </div>
+
           <template #action>
             <n-rate
               :on-update:value="(value) => updateRating(value, party.id)"
@@ -17,13 +22,25 @@
         </n-card>
       </n-gi>
     </n-grid>
+    <n-modal v-model:show="showModal">
+      <n-card
+        style="width: 50%"
+        :title="info.value"
+        :bordered="false"
+        size="huge"
+        aria-modal="true"
+      >
+        <template #header-extra>Party #{{ modalTitle }} </template>
+        {{ modalText }}
+      </n-card>
+    </n-modal>
   </n-space>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue";
 
-import { NSpace, NCard, NGrid, NGi, NRate } from "naive-ui";
+import { NSpace, NCard, NGrid, NGi, NRate, NEllipsis, NModal } from "naive-ui";
 
 export default defineComponent({
   name: "RateTopic",
@@ -36,11 +53,15 @@ export default defineComponent({
     NGrid,
     NGi,
     NRate,
+    NEllipsis,
+    NModal,
   },
   emits: ["updatePoints"],
   data() {
     return {
       points: [],
+      modalTitle: "",
+      modalText: "",
     };
   },
   setup(props) {
@@ -50,14 +71,18 @@ export default defineComponent({
       .map(({ value }) => value);
     return {
       party_mixed,
-      party: ref(null),
-      topic: ref(null),
+      showModal: ref(false),
     };
   },
   methods: {
     updateRating(value, partyID) {
       this.points[partyID] = value;
       this.$emit("updatePoints", this.info.id, this.points);
+    },
+    openModal(index, text) {
+      this.modalTitle = index;
+      this.modalText = text;
+      this.showModal = true;
     },
   },
 });
