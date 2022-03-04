@@ -40,7 +40,7 @@
       preset="card"
       :title="info.value"
       :bordered="false"
-      style="width: 60%"
+      id="textModal"
     >
       <template #header-extra>{{ modalTitle }} </template>
       {{ modalText }}
@@ -114,5 +114,23 @@ export default defineComponent({
 span.n-ellipsis {
   word-wrap: break-word;
   max-width: 100%;
+}
+</style>
+
+<style>
+#textModal {
+  width: 100%;
+}
+
+@media only screen and (min-width: 800px) {
+  #textModal {
+    width: 80%;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  #textModal {
+    width: 60%;
+  }
 }
 </style>
