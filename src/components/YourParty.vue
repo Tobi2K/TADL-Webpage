@@ -18,7 +18,7 @@
         </tr>
       </tbody>
     </n-table>
-    <n-grid :cols="2">
+    <n-grid cols="1 m:2" responsive="screen">
       <n-gi>
         <n-button
           round

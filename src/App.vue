@@ -327,6 +327,8 @@ export default {
 }
 html {
   min-height: 100%;
-  background: linear-gradient(to bottom, #f6a17c, #7a63a1);
+  background: rgb(255, 120, 62);
+
+  background: linear-gradient(135deg, #ff783e 0%, #ad6098 100%);
 }
 </style>
