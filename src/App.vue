@@ -1,119 +1,29 @@
 <template>
-  <div class="container" v-if="info">
-    <n-card
-      title="WELCOME TO OUR PROJECT"
-      size="huge"
-      :bordered="false"
-      style="background: rgba(255, 255, 255, 0.4); width: 60%; margin-left: 20%"
-    >
-      <h3>What?</h3>
-      <p>
-        This Application lets you rate statements made by German political
-        parties, without knowing who actually said what. In the end, you get a
-        ranking of which partys statements you most agree with.
-      </p>
-      <h3>Why?</h3>
-      <p>
-        This project aims to extract information from party manifestos on
-        certain topics. We hope to give a good insight into party talking points
-        without needing to read the entire manifesto.
-      </p>
-      <h3>How?</h3>
-      <p>
-        To get started click the button below and rate all statements with 1-5
-        stars. You can navigate between topics using the arrows at the bottom of
-        the page.
-      </p>
-      <n-button type="info" :round="true" @click="start()">Start</n-button>
-      <p>
-        <small>
-          Important Note: The party manifestos are written in German. Thus the
-          summaries will be German as well.
-        </small>
-      </p>
-    </n-card>
-  </div>
+  <welcome-dialog @start="start()" v-if="info" />
   <div class="container" v-else>
-    <n-carousel
-      show-arrow
-      :show-dots="false"
-      :loop="false"
+    <topic-slider
       v-if="selecting"
+      :topics="topics"
+      @calculateScore="calculateScore"
+      @updatePoints="updateScores"
       :key="refresh"
-      id="carousel"
-    >
-      <template #arrow="{ prev, next, currentIndex }">
-        <n-grid :cols="2" x-gap="12" class="mt mb">
-          <n-gi>
-            <n-button round secondary @click="prev" v-if="currentIndex > 0">
-              <n-icon color="white" size="30"><ArrowBackFilled /></n-icon>
-            </n-button>
-          </n-gi>
-          <n-gi>
-            <n-button
-              round
-              secondary
-              @click="next"
-              v-if="currentIndex < topics.length - 1"
-            >
-              <n-icon color="white" size="30"><ArrowForwardFilled /></n-icon>
-            </n-button>
-            <n-button round type="info" @click="calculateScore()" v-else>
-              Get Results
-            </n-button>
-          </n-gi>
-        </n-grid>
-      </template>
-      <rate-topic
-        v-for="topic in topics"
-        :key="topic"
-        :info="topic"
-        @updatePoints="updateScores"
-      />
-    </n-carousel>
-    <n-card title="YOUR PARTY" size="huge" v-else>
-      <h3>
-        According to your scores, you agree most with: {{ this.result[0].name }}
-      </h3>
-      <n-table :bordered="false" :single-line="false">
-        <thead>
-          <tr>
-            <th>Party</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="party in result" :key="party">
-            <td>{{ party.name }}</td>
-            <td>{{ party.score }}</td>
-          </tr>
-        </tbody>
-      </n-table>
-      <n-button round secondary type="primary" @click="reset()" class="mt">
-        Redo?
-      </n-button>
-    </n-card>
+      :showParty="showParty"
+    />
+    <your-party v-else :result="result" @reset="reset" />
   </div>
 </template>
 
 <script>
-import RateTopic from "./components/RateTopic.vue";
-import { NCarousel, NGrid, NIcon, NGi, NButton, NCard, NTable } from "naive-ui";
-import { ArrowBackFilled, ArrowForwardFilled } from "@vicons/material";
+import WelcomeDialog from "./components/WelcomeDialog.vue";
+import TopicSlider from "./components/TopicSlider.vue";
+import YourParty from "./components/YourParty.vue";
 
 export default {
   name: "App",
   components: {
-    RateTopic,
-    NCarousel,
-    NGrid,
-    NIcon,
-    ArrowForwardFilled,
-    ArrowBackFilled,
-    NGi,
-    NButton,
-    NCard,
-    NTable,
+    WelcomeDialog,
+    TopicSlider,
+    YourParty,
   },
   data() {
     return {
@@ -123,6 +33,7 @@ export default {
       refresh: false,
       selectedPartyID: null,
       info: true,
+      showParty: false,
     };
   },
   setup() {
@@ -157,7 +68,7 @@ export default {
             },
             {
               id: 3,
-              name: "GRUENE",
+              name: "GRÜNE",
               text: "Der Weg in die Klimaneutralität bietet riesige Chancen auf mehr Lebensqualität: Städte mit weniger Staus und Abgasen, mit Platz, um sicher Rad zu fahren und zu Fuß zu gehen, zu spielen und zu leben. Das hat keine Zukunft – moderne Mobilität für dieses Jahrhundert verlangt neue Prioritäten. Deutschland braucht eine Infrastrukturentwicklung, die an den Zielen der Mobilität für alle und an Klimaneutralität ausgerichtet ist und den Fokus auf den Ausbau von Schienen, Radwegen und auf eine intelligente Vernetzung umweltfreundlicher Verkehrsmittel legt. Nirgendwo wird die Mobilitätswende sehnlicher erwartet als in den Innenstädten: Unfälle, Staus, Abgase, Lärm, zu wenig Platz für Kinder zum Spielen – die autozentrierte Stadt ist nicht nur klimaschädlich, sondern auch kein schöner Ort zum Leben. Die Städte sollen mehr Möglichkeiten bekommen, regulierend in den Autoverkehr einzugreifen und öffentlichen Raum neu aufzuteilen, zum Beispiel indem Autos nicht mehr überall, sondern nur noch auf gekennzeichneten Plätzen parken dürfen. Mit all diesem legen wir die Grundlagen dafür, dass Deutschland und Europa erfolgreiche Industriestandorte mit hoher Wertschöpfung, starkem Sozialstaat und guten Arbeitsplätzen bleiben. Nur wenn auch der Staat seinen Teil beiträgt, wenn öffentliche und private Investitionen gemeinsam auf ein Ziel ausgerichtet werden, wird Europa den Anschluss an moderne Zukunftstechnologien halten und sich im Wettbewerb mit den USA und China behaupten können. So gelingt die sozial-ökologische Transformation, so schaffen wir nachhaltigen Wohlstand und sichern die Wettbewerbsfähigkeit unseres Landes in einer handlungsfähigen Europäischen Union. Den neu geschaffenen Wiederaufbaufonds verstetigen wir, integrieren ihn fest in den EU-Haushalt, ermöglichen so eine demokratische Kontrolle und nutzen ihn auch dauerhaft, um in wichtige Zukunftsbereiche zu investieren, etwa gemeinsame europäische Energienetze oder ein Schnellbahnnetz. So wollen wir in den nächsten zehn Jahren den Bestand an Sozialwohnungen um eine Million erhöhen.",
             },
             {
@@ -199,7 +110,7 @@ export default {
             {
               id: 4,
               name: "LINKE",
-              text: "Eine große Mehrheit der Menschen wünscht sich eine gut ausgestattete und zuverlässig funktionierende öffentliche Infrastruktur und Dienstleistungen im Gesundheitswesen, bei Schulen, Kitas und Hochschulen, beim öffentlichen Nahverkehr und der Bahn. Keine Steuergelder ohne Gegenleistung – staatliche Gelder (egal ob direkte Hilfszahlungen oder versteckte Subventionen) müssen an langfristige Garantien von Arbeitsplätzen, Tarifverträgen und an verbindliche Investitionspläne gebunden werden, um den notwendigen ökologischen Umbau der Produktion voran zu treiben, Planungssicherheit und sichere Einkommen für die Beschäftigten zu garantieren. Mehr Kinderkrankentage: Aufgrund der Corona-Pandemie wurden die Kinderkrankentage befristet bis Ende 2021 für gesetzlich versicherte Elternteile um zehn weitere Tage je Kind und für Alleinerziehende um zusätzlich zwanzig Tage je Kind verlängert. Es ist Zeit, dass endlich diejenigen von der notwendigen Transformation zu einer klimaneutralen Gesellschaft profitieren, die es in den letzten Jahren schwer hatten: Beschäftigte im Niedriglohnsektor, in der Industrie oder auf dem Bau, in sozialen Dienstleistungen und der „systemrelevanten“ Infrastruktur, Mieter*innen, Menschen, die ihre Angehörigen und Freund pflegen. Anders als Konzepte von Strukturwandel in der Vergangenheit geht es nicht um Subventionen von Konzernen und eine gewisse „soziale Abfederung“ der Folgen von Krisen, sondern um eine bessere Zukunft für die Beschäftigten in der Industrie: sinnvolle und sichere Arbeit, Löhne, die für ein gutes Leben reichen, weniger Stress und mehr freie Zeit. Wir fordern statt Subventionen für Aktionärs-Renditen einen Rettungsschirm für Industriearbeitsplätze, der für sichere und sinnvolle Arbeit in der Zukunft sorgt:  Keine Steuergelder ohne Gegenleistung – staatliche Gelder (egal ob direkte Hilfszahlungen oder versteckte Subventionen) müssen an langfristige Garantien von Arbeitsplätzen, Tarifverträgen und an verbindliche Investitionspläne gebunden werden, um den notwendigen ökologischen Umbau der Produktion voran zu treiben, Planungssicherheit und sichere Einkommen für die Beschäftigten zu garantieren. Immer größere Vermögen haben sich in immer weniger Händen konzentriert: Zwei Drittel aller Vermögen sind in der Hand der oberen zehn Prozent der Bevölkerung. Dem privaten Reichtum steht eine verarmte öffentliche Infrastruktur gegenüber: Bibliotheken und Schwimmbäder schließen, Personal im Krankenhaus wird gekürzt, um notwendige Reparaturen finanzieren zu können, Bus und Bahn kommen auf dem Land nur noch selten und sind in der Stadt oft überfüllt, weil die Kapazitäten nicht ausreichen. Mit diesen Mehreinnahmen können wir den Einstieg in eine solidarische Gesellschaft finanzieren: bessere soziale Sicherheit, mehr Personal in Bildung, Gesundheit und Pflege und einen Neustart im gemeinnützigen Wohnungsbau, Barrierefreiheit und den Einstieg in einen sozialen und ökologischen Umbau der Wirtschaft. Denn nur mit flächendeckender Ganztagsbetreuung müssen Eltern sich nicht zwischen der Betreuung ihrer Kinder und ihrem Beruf entscheiden (vgl. Kapitel Bildung).",
+              text: "Eine große Mehrheit der Menschen wünscht sich eine gut ausgestattete und zuverlässig funktionierende öffentliche Infrastruktur und Dienstleistungen im Gesundheitswesen, bei Schulen, Kitas und Hochschulen, beim öffentlichen Nahverkehr und der Bahn. Keine Steuergelder ohne Gegenleistung – staatliche Gelder (egal ob direkte Hilfszahlungen oder versteckte Subventionen) müssen an langfristige Garantien von Arbeitsplätzen, Tarifverträgen und an verbindliche Investitionspläne gebunden werden, um den notwendigen ökologischen Umbau der Produktion voran zu treiben, Planungssicherheit und sichere Einkommen für die Beschäftigten zu garantieren. Mehr Kinderkrankentage: Aufgrund der Corona-Pandemie wurden die Kinderkrankentage befristet bis Ende 2021 für gesetzlich versicherte Elternteile um zehn weitere Tage je Kind und für Alleinerziehende um zusätzlich zwanzig Tage je Kind verlängert. Es ist Zeit, dass endlich diejenigen von der notwendigen Transformation zu einer klimaneutralen Gesellschaft profitieren, die es in den letzten Jahren schwer hatten: Beschäftigte im Niedriglohnsektor, in der Industrie oder auf dem Bau, in sozialen Dienstleistungen und der „systemrelevanten“ Infrastruktur, Mieter*innen, Menschen, die ihre Angehörigen und Freund pflegen. Anders als Konzepte von Strukturwandel in der Vergangenheit geht es nicht um Subventionen von Konzernen und eine gewisse „soziale Abfederung“ der Folgen von Krisen, sondern um eine bessere Zukunft für die Beschäftigten in der Industrie: sinnvolle und sichere Arbeit, Löhne, die für ein gutes Leben reichen, weniger Stress und mehr freie Zeit. Wir fordern statt Subventionen für Aktionärs-Renditen einen Rettungsschirm für Industriearbeitsplätze, der für sichere und sinnvolle Arbeit in der Zukunft sorgt: Keine Steuergelder ohne Gegenleistung – staatliche Gelder (egal ob direkte Hilfszahlungen oder versteckte Subventionen) müssen an langfristige Garantien von Arbeitsplätzen, Tarifverträgen und an verbindliche Investitionspläne gebunden werden, um den notwendigen ökologischen Umbau der Produktion voran zu treiben, Planungssicherheit und sichere Einkommen für die Beschäftigten zu garantieren. Immer größere Vermögen haben sich in immer weniger Händen konzentriert: Zwei Drittel aller Vermögen sind in der Hand der oberen zehn Prozent der Bevölkerung. Dem privaten Reichtum steht eine verarmte öffentliche Infrastruktur gegenüber: Bibliotheken und Schwimmbäder schließen, Personal im Krankenhaus wird gekürzt, um notwendige Reparaturen finanzieren zu können, Bus und Bahn kommen auf dem Land nur noch selten und sind in der Stadt oft überfüllt, weil die Kapazitäten nicht ausreichen. Mit diesen Mehreinnahmen können wir den Einstieg in eine solidarische Gesellschaft finanzieren: bessere soziale Sicherheit, mehr Personal in Bildung, Gesundheit und Pflege und einen Neustart im gemeinnützigen Wohnungsbau, Barrierefreiheit und den Einstieg in einen sozialen und ökologischen Umbau der Wirtschaft. Denn nur mit flächendeckender Ganztagsbetreuung müssen Eltern sich nicht zwischen der Betreuung ihrer Kinder und ihrem Beruf entscheiden (vgl. Kapitel Bildung).",
             },
             {
               id: 5,
@@ -235,7 +146,7 @@ export default {
             {
               id: 4,
               name: "LINKE",
-              text: "Berufsschulen und Hochschulen müssen gesetzlich verpflichtet werden, Angebote der beruflichen Fortbildung zu schaffen, die allen Beschäftigten unabhängig vom bisherigen Bildungsabschluss offenstehen. Das Ziel schneller Vermittlung Erwerbsloser muss gestrichen werden, stattdessen müssen Erhalt der Qualifikation und Weiterbildung Vorrang bekommen. Die allgemeine, kulturelle, politische und berufliche Weiterbildung ist ein wichtiger Teil davon. Hier müssen bei der beruflichen Weiterbildung und an den Hochschulen neue Möglichkeiten geschaffen werden. Dafür müssen zusätzliche Studienplätze geschaffen werden und im Ausland erworbene Bildungsabschlüsse schnell und unbürokratisch anerkannt werden.  Den Zugang für ausländische Studierende wollen wir vereinfachen. Wir wollen mehr feste Stellen neben der Professur schaffen.  Die Lehr- und Lernmittelfreiheit muss an allen Schulen auch für digitale Geräte sichergestellt sein.  Die Lehrer müssen fortgebildet werden in der Benutzung dieser Technologien und in Datenschutzfragen. Dafür müssen zusätzliche Stellen geschaffen werden.",
+              text: "Berufsschulen und Hochschulen müssen gesetzlich verpflichtet werden, Angebote der beruflichen Fortbildung zu schaffen, die allen Beschäftigten unabhängig vom bisherigen Bildungsabschluss offenstehen. Das Ziel schneller Vermittlung Erwerbsloser muss gestrichen werden, stattdessen müssen Erhalt der Qualifikation und Weiterbildung Vorrang bekommen. Die allgemeine, kulturelle, politische und berufliche Weiterbildung ist ein wichtiger Teil davon. Hier müssen bei der beruflichen Weiterbildung und an den Hochschulen neue Möglichkeiten geschaffen werden. Dafür müssen zusätzliche Studienplätze geschaffen werden und im Ausland erworbene Bildungsabschlüsse schnell und unbürokratisch anerkannt werden. Den Zugang für ausländische Studierende wollen wir vereinfachen. Wir wollen mehr feste Stellen neben der Professur schaffen. Die Lehr- und Lernmittelfreiheit muss an allen Schulen auch für digitale Geräte sichergestellt sein. Die Lehrer müssen fortgebildet werden in der Benutzung dieser Technologien und in Datenschutzfragen. Dafür müssen zusätzliche Stellen geschaffen werden.",
             },
             {
               id: 5,
@@ -281,7 +192,7 @@ export default {
           ],
         },
         {
-          value: "INNEN",
+          value: "INNENPOLITIK",
           id: 4,
           parties: [
             {
@@ -307,7 +218,7 @@ export default {
             {
               id: 4,
               name: "LINKE",
-              text: "Soziale Dienstleistungen und öffentliche Infrastrukturen, die Zugang für alle ermöglichen: Soziale Dienstleistungen – z.B. im Gesundheits-, Pflege-, Bildungs- und Sozialwesen – und Öffentliche Infrastrukturen – z.B. Bibliotheken, Theatern, Schwimmbädern, Straßen, Nahverkehr – sind deshalb zentral für den sozialen Zusammenhalt in der Gesellschaft. Um urheberrechtlich geschützte Werke für Zwecke der Bildung, Forschung und Lehre frei zugänglich zu machen, wollen wir eine allgemeine Ausnahme für Bildung und Forschung im Urheberrecht verankern. Zur Umsetzung des Rechts auf Elternschaft müssen flächendeckend Wohn- und Unterstützungsleistungen im Rahmen der begleiteten Elternschaft zur Verfügung gestellt werden  Für körperliche und sexuelle Selbstbestimmung und Gleichstellung aller Lebensweisen Wir wollen, dass die vielfältigen Lebensweisen rechtlich gleichgestellt werden. Die noch verstärkte Isolation fordert die psychische Gesundheit vieler Geflüchteter (vgl. Kapitel Solidarische Einwanderungsgesellschaft)  Wir fordern geschützte Einzelzimmer für besonders schutzbedürftige Geflüchtete wie LSBTIQ*-Geflüchtete, Zugang zum Internet, Recht auf barrierefreie, gesundheitliche Versorgung unabhängig von Aufenthaltsstatus und den Ausbau spezifischer Vernetzungsund Hilfsangebote für queere Geflüchtete. Die Städtebauförderung muss auf die Entwicklung von inklusiven und umfassend barrierefreien Lebensräumen und Stadtquartieren ausgerichtet werden, in denen ein gleichberechtigtes, am Sozialraum orientiertes Zusammenleben aller Menschen mit und ohne Behinderungen erreicht wird: eine „Universelles Design“ („Design für Alle“ bzw. „Nutzen-für-alle-Konzept“) gemäß Artikel 2 der UN-BRK. Wir wollen inklusive Bildung und Erziehung von Kindern und Jugendlichen mit und ohne Behinderung in allen Entwicklungsphasen mit entsprechender Qualifizierung des Personals und ausreichender Personal- und Sachausstattung der Einrichtungen (vgl. Kapitel Bildung) Alle Gesetze und Verordnungen müssen überprüft werden, ob sie der UN-BRK entsprechen und bei Bedarf entsprechend geändert werden. Der Kooperation mit autoritären Regimen zum Zweck der Abschottung der EU stellen wir uns entgegen: Sie sind nicht Teil der Lösung, sondern Teil des Problems (vgl. Kapitel Für eine solidarische Einwanderungspolitik). Zivilgesellschaftliche Gruppen, die sich gegen Rassismus, Antisemitismus, Homo- und Transfeindlichkeit, Antiziganismus, religiösen Fundamentalismus und für mehr Demokratie engagieren sowie Flüchtlingsräte, migrantische Verbände, selbstverwaltete Beratungsangebote und die Selbstorganisation von Migrant wollen wir durch ein Demokratiefördergesetz stärker und endlich dauerhaft fördern (vgl Kap. Statt weiter systematisch Fluchtursachen wie Waffen, Umwelt- und Klimazerstörung sowie Armut zu exportieren, wollen wir daher globale Ungerechtigkeiten überwinden, Demokratie und soziale Bewegungen von unten unterstützen und Menschen in Not effektiv helfen (vgl. Kapitel Soziale Gerechtigkeit global). Dagegen braucht es eine soziale Politik für alle Menschen: Mit gleichen Rechten für alle und massiven Investitionen in die öffentliche Infrastruktur, die eine Gesellschaft zusammenhält - bezahlbarer Wohnraum, kostenfreier ÖPNV, gute Gesundheitsversorgung, Arbeit und Bildung (vgl. Für eine Solidarische Einwanderungsgesellschaft).",
+              text: "Soziale Dienstleistungen und öffentliche Infrastrukturen, die Zugang für alle ermöglichen: Soziale Dienstleistungen – z.B. im Gesundheits-, Pflege-, Bildungs- und Sozialwesen – und Öffentliche Infrastrukturen – z.B. Bibliotheken, Theatern, Schwimmbädern, Straßen, Nahverkehr – sind deshalb zentral für den sozialen Zusammenhalt in der Gesellschaft. Um urheberrechtlich geschützte Werke für Zwecke der Bildung, Forschung und Lehre frei zugänglich zu machen, wollen wir eine allgemeine Ausnahme für Bildung und Forschung im Urheberrecht verankern. Zur Umsetzung des Rechts auf Elternschaft müssen flächendeckend Wohn- und Unterstützungsleistungen im Rahmen der begleiteten Elternschaft zur Verfügung gestellt werden  Für körperliche und sexuelle Selbstbestimmung und Gleichstellung aller Lebensweisen Wir wollen, dass die vielfältigen Lebensweisen rechtlich gleichgestellt werden. Die noch verstärkte Isolation fordert die psychische Gesundheit vieler Geflüchteter (vgl. Kapitel Solidarische Einwanderungsgesellschaft). Wir fordern geschützte Einzelzimmer für besonders schutzbedürftige Geflüchtete wie LSBTIQ*-Geflüchtete, Zugang zum Internet, Recht auf barrierefreie, gesundheitliche Versorgung unabhängig von Aufenthaltsstatus und den Ausbau spezifischer Vernetzungsund Hilfsangebote für queere Geflüchtete. Die Städtebauförderung muss auf die Entwicklung von inklusiven und umfassend barrierefreien Lebensräumen und Stadtquartieren ausgerichtet werden, in denen ein gleichberechtigtes, am Sozialraum orientiertes Zusammenleben aller Menschen mit und ohne Behinderungen erreicht wird: eine „Universelles Design“ („Design für Alle“ bzw. „Nutzen-für-alle-Konzept“) gemäß Artikel 2 der UN-BRK. Wir wollen inklusive Bildung und Erziehung von Kindern und Jugendlichen mit und ohne Behinderung in allen Entwicklungsphasen mit entsprechender Qualifizierung des Personals und ausreichender Personal- und Sachausstattung der Einrichtungen (vgl. Kapitel Bildung) Alle Gesetze und Verordnungen müssen überprüft werden, ob sie der UN-BRK entsprechen und bei Bedarf entsprechend geändert werden. Der Kooperation mit autoritären Regimen zum Zweck der Abschottung der EU stellen wir uns entgegen: Sie sind nicht Teil der Lösung, sondern Teil des Problems (vgl. Kapitel Für eine solidarische Einwanderungspolitik). Zivilgesellschaftliche Gruppen, die sich gegen Rassismus, Antisemitismus, Homo- und Transfeindlichkeit, Antiziganismus, religiösen Fundamentalismus und für mehr Demokratie engagieren sowie Flüchtlingsräte, migrantische Verbände, selbstverwaltete Beratungsangebote und die Selbstorganisation von Migrant wollen wir durch ein Demokratiefördergesetz stärker und endlich dauerhaft fördern (vgl Kap. Statt weiter systematisch Fluchtursachen wie Waffen, Umwelt- und Klimazerstörung sowie Armut zu exportieren, wollen wir daher globale Ungerechtigkeiten überwinden, Demokratie und soziale Bewegungen von unten unterstützen und Menschen in Not effektiv helfen (vgl. Kapitel Soziale Gerechtigkeit global). Dagegen braucht es eine soziale Politik für alle Menschen: Mit gleichen Rechten für alle und massiven Investitionen in die öffentliche Infrastruktur, die eine Gesellschaft zusammenhält - bezahlbarer Wohnraum, kostenfreier ÖPNV, gute Gesundheitsversorgung, Arbeit und Bildung (vgl. Für eine Solidarische Einwanderungsgesellschaft).",
             },
             {
               id: 5,
@@ -377,11 +288,12 @@ export default {
       this.result = this.result.sort((a, b) => b.score - a.score);
       this.selecting = false;
     },
-    reset() {
+    reset(showParty) {
       this.refresh = !this.refresh;
       this.score = [];
       this.result = [];
       this.selecting = true;
+      this.showParty = showParty;
     },
     start() {
       this.info = false;
