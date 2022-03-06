@@ -1,8 +1,7 @@
 <template>
   <div class="container">
     <n-card size="huge" :bordered="false" id="welcome">
-      <h1>WELCOME TO OUR PROJECT</h1>
-      <h2>Semi-automatic evaluation of German partymanifestos</h2>
+      <h1>Semi-automatic evaluation of German party manifestos</h1>
       <h3>What?</h3>
       <p>
         This Application lets you rate statements made by German political
@@ -10,6 +9,9 @@
         ranking of which partys statements you most agree with. The statements
         were extracted from party manifestos using LDA to approximate topics and
         BERT to classify statements into topics.
+        <br />
+        The statements are summaries of party manifestos, meaning consecutive
+        sentences do not match necessarily.
       </p>
       <h3>Why?</h3>
       <p>
@@ -30,6 +32,9 @@
         <small>
           Important Note: The party manifestos are written in German. Thus the
           following pages will be German.
+          <br />
+          It might be possible to use a translation plugin in your browser for
+          an english version.
         </small>
       </p>
     </n-card>

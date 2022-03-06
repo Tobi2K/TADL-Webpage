@@ -1,9 +1,6 @@
 <template>
-  <n-card title="DEINE PARTEI" size="huge">
-    <h3>
-      Entsprechend deiner Punktevergabe, hast du am meisten Übereinstimmung mit:
-      {{ this.result[0].name }}
-    </h3>
+  <n-card title="BEWERTUNG" size="huge">
+    <h3>{{ this.result[0].name }} hat die meisten Punkte erhalten!</h3>
     <n-table :bordered="false" :single-line="false">
       <thead>
         <tr>
